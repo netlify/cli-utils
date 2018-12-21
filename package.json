@@ -1,0 +1,82 @@
+{
+  "name": "@netlify/cli-utils",
+  "description": "Netlify CLI utilities for configuration and API access",
+  "version": "1.0.0",
+  "author": "Netlify Inc.",
+  "ava": {
+    "files": [
+      "src/**/*.test.js"
+    ],
+    "cache": true,
+    "concurrency": 5,
+    "failFast": false,
+    "failWithoutAssertions": false,
+    "tap": false,
+    "compileEnhancements": false,
+    "babel": false
+  },
+  "bugs": {
+    "url": "https://github.com/netlify/cli-utils/issues"
+  },
+  "contributors": [
+    "David Wells <david.wells@netlify.com> (https://davidwells.io/)",
+    "Bret Comnes <bcomnes@gmail.com> (https://bret.io)"
+  ],
+  "devDependencies": {
+    "@oclif/dev-cli": "^1.13.31",
+    "auto-changelog": "^1.10.2",
+    "ava": "^1.0.1",
+    "coveralls": "^3.0.2",
+    "dependency-check": "^3.2.0",
+    "dependency-cruiser": "^4.9.0",
+    "eslint": "^5.10.0",
+    "eslint-config-prettier": "^3.0.1",
+    "eslint-plugin-import": "^2.13.0",
+    "eslint-plugin-node": "^8.0.0",
+    "eslint-plugin-prettier": "^3.0.0",
+    "gh-release": "^3.4.0",
+    "mkdirp": "^0.5.1",
+    "npm-run-all": "^4.1.3",
+    "nyc": "^13.0.0",
+    "prettier": "^1.13.7",
+    "tempy": "^0.2.1"
+  },
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "homepage": "https://github.com/netlify/cli-utils#readme",
+  "keywords": [
+    "cli",
+    "netlify"
+  ],
+  "license": "MIT",
+  "main": "src/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/netlify/cli-utils.git"
+  },
+  "scripts": {
+    "build": "run-s build:*",
+    "build:deptree": "depcruise --exclude '^node_modules' --output-type dot src | dot -T svg > site/dist/dependencygraph.svg",
+    "test": "run-s test:*",
+    "test:ava": "nyc --reporter=lcov ava --verbose && nyc report",
+    "test:lint": "eslint src",
+    "test:deps": "dependency-check ./package.json --entry \"src/**/!(*.test).js\" --unused --missing --no-dev --no-peer -i @oclif/plugin-not-found -i @oclif/config -i @oclif/plugin-help -i @oclif/plugin-plugins -i @oclif/plugin-autocomplete",
+    "watch": "nyc --reporter=lcov ava --watch",
+    "report": "nyc report --reporter=text-lcov | coveralls",
+    "version": "auto-changelog -p --template keepachangelog && git add CHANGELOG.md",
+    "prepublishOnly": "git push && git push --tags && gh-release"
+  },
+  "dependencies": {
+    "@iarna/toml": "^2.2.1",
+    "chalk": "^2.4.1",
+    "configstore": "^4.0.0",
+    "dot-prop": "^4.2.0",
+    "find-up": "^3.0.0",
+    "lodash.merge": "^4.6.1",
+    "make-dir": "^1.3.0",
+    "netlify": "^2.2.1",
+    "uuid": "^3.3.2",
+    "write-file-atomic": "^2.3.0"
+  }
+}
