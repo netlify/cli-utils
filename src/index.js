@@ -3,15 +3,15 @@ const API = require('netlify')
 const getConfigPath = require('./utils/get-config-path')
 const readConfig = require('./utils/read-config')
 const globalConfig = require('./global-config')
-const State = require('./state')
-const openBrowser = require('../utils/open-browser')
-const projectRoot = require('./utils/project-root')
-const { track, identify } = require('../utils/telemetry')
+const State = require('./cli-state')
+const openBrowser = require('./utils/open-browser')
+const findRoot = require('./find-root')
 const merge = require('lodash.merge')
 
 class BaseCommand {
   // ctx can be `this` of a oclif command instance
   constructor(ctx = {}, opts = {}) {
+    const projectRoot = findRoot(process.cwd())
     this.clientId = opts.clientId
 
     const token = this.configToken
@@ -112,15 +112,15 @@ class BaseCommand {
     // Set user data
     this.netlify.globalConfig.set(`users.${userID}`, userData)
 
-    const email = user.email
-    await identify({
-      name: user.full_name || account.name || account.billing_name,
-      email: email
-    }).then(() => {
-      return track('user_login', {
-        email: email
-      })
-    })
+    // const email = user.email
+    // await identify({
+    //  name: user.full_name || account.name || account.billing_name,
+    //  email: email
+    // }).then(() => {
+    //  return track('user_login', {
+    //    email: email
+    //  })
+    //})
     // Log success
     this.log()
     this.log(`${chalk.greenBright('You are now logged into your Netlify account!')}`)

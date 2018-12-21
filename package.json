@@ -39,7 +39,9 @@
     "npm-run-all": "^4.1.3",
     "nyc": "^13.0.0",
     "prettier": "^1.13.7",
-    "tempy": "^0.2.1"
+    "rimraf": "^2.6.2",
+    "tempy": "^0.2.1",
+    "util.promisify": "^1.0.0"
   },
   "engines": {
     "node": ">=8.0.0"
@@ -70,9 +72,11 @@
   "dependencies": {
     "@iarna/toml": "^2.2.1",
     "chalk": "^2.4.1",
+    "cli-ux": "^5.0.0",
     "configstore": "^4.0.0",
     "dot-prop": "^4.2.0",
     "find-up": "^3.0.0",
+    "is-docker": "^1.1.0",
     "lodash.merge": "^4.6.1",
     "make-dir": "^1.3.0",
     "netlify": "^2.2.1",

@@ -3,7 +3,7 @@ const makeDir = require('make-dir')
 const fs = require('fs')
 const writeFileAtomic = require('write-file-atomic')
 const dotProp = require('dot-prop')
-const findRoot = require('./find-root')
+const findRoot = require('../find-root')
 
 const permissionError = "You don't have access to this file."
 
