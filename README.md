@@ -1,4 +1,4 @@
-# @netlify/cli-base
+# @netlify/cli-utils
 
 [netlify-cli](https://github.com/netlify/cli)'s [@oclif/command](@oclif/command) baseclass.
 
