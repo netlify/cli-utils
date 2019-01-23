@@ -5,6 +5,8 @@ const tempy = require('tempy')
 const mkdirp = require('mkdirp')
 
 test('Find root in a git project', t => {
+  // can't check in .git folders so we just make one as part of the test
+  mkdirp.sync(path.join(__dirname, 'fixtures', 'git-project', '.git'))
   t.is(
     findRoot(path.join(__dirname, 'fixtures', 'git-project', 'some', 'sub', 'dir')),
     path.join(__dirname, 'fixtures', 'git-project'),
