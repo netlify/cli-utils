@@ -8,24 +8,19 @@ Also allows commands to program against a consistent base-class api to enable ch
 ## Usage
 
 ```js
-const Command = require('../../base')
-const renderShortDesc = require('../../utils/renderShortDescription')
-const showHelp = require('../../utils/showHelp')
-const { isEmptyCommand } = require('../../utils/checkCommandInputs')
+const Command = require('@netlify/cli-utils')
 
 class OpenCommand extends Command {
   async run() {
-    const { flags, args } = this.parse(OpenCommand)
-    // Show help on empty sub command
-    if (isEmptyCommand(flags, args)) {
-      showHelp(this.id)
-    }
-    // Default open Netlify admin
-    await OpenAdminCommand.run()
+    await this.authenticate()
+
+    const api = this.netlify.api
+
+    // authenticated api
   }
 }
 
-OpenCommand.description = `${renderShortDesc('Opens current project urls in browser')}`
+OpenCommand.description = `A description`
 
 OpenCommand.examples = [
   'netlify open:admin',
@@ -47,7 +42,7 @@ Commands that extend this base class get access to the [same api](https://oclif.
 
 ### `this.netlify.globalConfig`
 
-Provides access to configuration stored in the users home folder under `~/.netlify`.  
+Provides access to configuration stored in the users home folder under `~/.netlify`.
 See [global-config](global-config/README.md).
 
 ### `this.netlify.state`
