@@ -3,21 +3,14 @@ const makeDir = require('make-dir')
 const fs = require('fs')
 const writeFileAtomic = require('write-file-atomic')
 const dotProp = require('dot-prop')
-const findRoot = require('../find-root')
 
+const statePath = path.join('.netlify', 'state.json')
 const permissionError = "You don't have access to this file."
 
-class CLIState {
-  constructor(cwd = process.cwd(), opts) {
-    opts = Object.assign(
-      {
-        statePath: path.join('.netlify', 'state.json')
-      },
-      opts
-    )
-    const projectRoot = findRoot(cwd)
+class StateConfig {
+  constructor(projectRoot) {
     this.root = projectRoot
-    this.path = path.join(projectRoot, opts.statePath)
+    this.path = path.join(projectRoot, statePath)
   }
 
   get all() {
@@ -100,4 +93,4 @@ class CLIState {
   }
 }
 
-module.exports = CLIState
+module.exports = StateConfig

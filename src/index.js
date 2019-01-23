@@ -1,41 +1,57 @@
+const { Command } = require('@oclif/command')
 const chalk = require('chalk')
 const API = require('netlify')
 const getConfigPath = require('./utils/get-config-path')
 const readConfig = require('./utils/read-config')
 const globalConfig = require('./global-config')
-const State = require('./cli-state')
+const State = require('./state')
 const openBrowser = require('./utils/open-browser')
-const findRoot = require('./find-root')
+const findRoot = require('./utils/find-root')
+const { track, identify } = require('./utils/telemetry')
 const merge = require('lodash.merge')
 
-class BaseCommand {
-  // ctx can be `this` of a oclif command instance
-  constructor(ctx = {}, opts = {}) {
-    const projectRoot = findRoot(process.cwd())
-    this.clientId = opts.clientId
+// Netlify CLI client id. Lives in bot@netlify.com
+// Todo setup client for multiple environments
+const CLIENT_ID = 'd6f37de6614df7ae58664cfca524744d73807a377f5ee71f1a254f78412e3750'
 
+class BaseCommand extends Command {
+  constructor(...args) {
+    super(...args)
+  }
+  // Initialize context
+  async init(err) {
+    const projectRoot = findRoot(process.cwd())
+    // Grab netlify API token
     const token = this.configToken
 
     // Get site config from netlify.toml
     const configPath = getConfigPath(projectRoot)
+    // TODO: https://github.com/request/caseless to handle key casing issues
+    const config = readConfig(configPath)
+
     // Get site id & build state
     const state = new State(projectRoot)
 
-    this.api = new API(token)
-    this.site = {
-      rootPath: projectRoot,
-      configPath,
-      config: readConfig(configPath),
-      cliState: state,
-      get id() {
-        return state.get('siteId')
+    this.netlify = {
+      // api methods
+      api: new API(token),
+      // current site context
+      site: {
+        root: projectRoot,
+        configPath: configPath,
+        get id() {
+          return state.get('siteId')
+        },
+        set id(id) {
+          state.set('siteId', id)
+        }
       },
-      set id(id) {
-        state.set('siteId', id)
-      }
-    }
-    this.global = {
-      config: globalConfig
+      // Configuration from netlify.[toml/yml]
+      config: config,
+      // global cli config
+      globalConfig: globalConfig,
+      // state of current site dir
+      state: state
     }
   }
 
@@ -64,7 +80,6 @@ class BaseCommand {
   async authenticate(authToken) {
     const webUI = process.env.NETLIFY_WEB_UI || 'https://app.netlify.com'
     const token = authToken || this.configToken
-    const clientId = this.clientID
     if (token) {
       // Update the api client
       this.clientToken = token
@@ -77,7 +92,7 @@ class BaseCommand {
 
     // Create ticket for auth
     const ticket = await this.netlify.api.createTicket({
-      clientId
+      clientId: CLIENT_ID
     })
 
     // Open browser for authentication
@@ -112,15 +127,15 @@ class BaseCommand {
     // Set user data
     this.netlify.globalConfig.set(`users.${userID}`, userData)
 
-    // const email = user.email
-    // await identify({
-    //  name: user.full_name || account.name || account.billing_name,
-    //  email: email
-    // }).then(() => {
-    //  return track('user_login', {
-    //    email: email
-    //  })
-    //})
+    const email = user.email
+    await identify({
+      name: user.full_name || account.name || account.billing_name,
+      email: email
+    }).then(() => {
+      return track('user_login', {
+        email: email
+      })
+    })
     // Log success
     this.log()
     this.log(`${chalk.greenBright('You are now logged into your Netlify account!')}`)

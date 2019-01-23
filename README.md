@@ -1,6 +1,6 @@
 # @netlify/cli-base
 
-[netlify-cli](https://github.com/netlify/cli)'s utility class.
+[netlify-cli](https://github.com/netlify/cli)'s [@oclif/command](@oclif/command) baseclass.
 
 Provides a unified way to load and persist global and site level cli config and authenticated api.
 Also allows commands to program against a consistent base-class api to enable changes down the road.
@@ -47,7 +47,7 @@ Commands that extend this base class get access to the [same api](https://oclif.
 
 ### `this.netlify.globalConfig`
 
-Provides access to configuration stored in the users home folder under `~/.netlify`.
+Provides access to configuration stored in the users home folder under `~/.netlify`.  
 See [global-config](global-config/README.md).
 
 ### `this.netlify.state`
