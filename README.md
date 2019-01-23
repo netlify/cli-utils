@@ -43,12 +43,12 @@ Commands that extend this base class get access to the [same api](https://oclif.
 ### `this.netlify.globalConfig`
 
 Provides access to configuration stored in the users home folder under `~/.netlify`.
-See [global-config](global-config/README.md).
+See [global-config](src/global-config/README.md).
 
 ### `this.netlify.state`
 
 Provides access to site-level state relative to the `process.cwd`. (e.g. `project/.netlify/config.json`)
-See [site-config](global-config/README.md)
+See [site-config](src/state/README.md)
 
 ### `this.netlify.api`
 
