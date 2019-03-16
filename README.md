@@ -56,7 +56,11 @@ An instance of the [`netlify`](https://github.com/netlify/js-client) api client.
 
 ### `this.netlify.site`
 
-Provides read access to `project/netlify.toml` config.
+get current site context including root, configPath, and id (with getter and setter).
+
+#### `this.netlify.config`
+
+Get the configuration from `netlify.[toml/yml]`.
 
 #### `this.authenticate()`
 
