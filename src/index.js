@@ -106,14 +106,11 @@ class BaseCommand extends Command {
 
     const user = await this.netlify.api.getCurrentUser()
     const userID = user.id
-    const accounts = await this.netlify.api.listAccountsForUser()
-    const account = accounts.find(account => account.type === 'PERSONAL')
 
     const userData = merge(this.netlify.globalConfig.get(`users.${userID}`), {
       id: userID,
       name: user.full_name,
       email: user.email,
-      slug: account.slug,
       auth: {
         token: accessToken,
         github: {
@@ -129,7 +126,7 @@ class BaseCommand extends Command {
 
     const email = user.email
     await identify({
-      name: user.full_name || account.name || account.billing_name,
+      name: user.full_name,
       email: email
     }).then(() => {
       return track('user_login', {
