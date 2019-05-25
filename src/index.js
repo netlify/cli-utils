@@ -4,7 +4,7 @@ const API = require('netlify')
 const getConfigPath = require('./utils/get-config-path')
 const readConfig = require('./utils/read-config')
 const globalConfig = require('./global-config')
-const State = require('./state')
+const StateConfig = require('./state')
 const openBrowser = require('./utils/open-browser')
 const findRoot = require('./utils/find-root')
 const { track, identify } = require('./utils/telemetry')
@@ -30,7 +30,7 @@ class BaseCommand extends Command {
     const config = readConfig(configPath)
 
     // Get site id & build state
-    const state = new State(projectRoot)
+    const state = new StateConfig(projectRoot)
 
     this.netlify = {
       // api methods
