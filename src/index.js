@@ -81,7 +81,7 @@ class BaseCommand extends Command {
     const webUI = process.env.NETLIFY_WEB_UI || 'https://app.netlify.com'
     const token = authToken || this.configToken
     if (!token) {
-      return await expensivelyAuthenticate()
+      return expensivelyAuthenticate()
     } else {
       return token
     }
