@@ -7,29 +7,28 @@ State is stored in `.netlify/state.json` next to the closest `.netlify` folder, 
 ## Usage
 
 ```js
-const StateConfig = require('../util/site-config');
+const StateConfig = require('./state-config')
 
 // create a Configstore instance with an unique ID e.g.
 // Package name and optionally some default values
-const conf = new StateConfig(projectRoot);
+const conf = new StateConfig(projectRoot)
 
-console.log(conf.get('foo'));
+console.log(conf.get('foo'))
 //=> 'bar'
 
-conf.set('awesome', true);
-console.log(conf.get('awesome'));
+conf.set('awesome', true)
+console.log(conf.get('awesome'))
 //=> true
 
 // Use dot-notation to access nested properties
-conf.set('bar.baz', true);
-console.log(conf.get('bar'));
+conf.set('bar.baz', true)
+console.log(conf.get('bar'))
 //=> {baz: true}
 
-conf.delete('awesome');
-console.log(conf.get('awesome'));
+conf.delete('awesome')
+console.log(conf.get('awesome'))
 //=> undefined
 ```
-
 
 ## API
 
@@ -85,6 +84,6 @@ Get all the config as an object or replace the current config with an object:
 
 ```js
 conf.all = {
-	hello: 'world'
-};
+  hello: 'world'
+}
 ```
