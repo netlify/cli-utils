@@ -80,14 +80,21 @@ class BaseCommand extends Command {
   async authenticate(authToken) {
     const webUI = process.env.NETLIFY_WEB_UI || 'https://app.netlify.com'
     const token = authToken || this.configToken
-    if (token) {
-      // Update the api client
-      this.clientToken = token
-      // Check if it works
-      await this.netlify.api.getCurrentUser()
+    if (!token) {
+      return await expensivelyAuthenticate()
+    } else {
       return token
     }
-
+  }
+  async expensivelyCheckToken(token) {
+    // this used to be inside authenticate() but was slowing down everything
+    // https://github.com/netlify/cli/issues/286
+    // we split it out so you have to be mindful of where you incur cost
+    this.clientToken = token
+    await this.netlify.api.getCurrentUser()
+    return token
+  }
+  async expensivelyAuthenticate() {
     this.log(`Logging into your Netlify account...`)
 
     // Create ticket for auth
