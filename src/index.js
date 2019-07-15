@@ -78,7 +78,6 @@ class BaseCommand extends Command {
   }
 
   async authenticate(authToken) {
-    const webUI = process.env.NETLIFY_WEB_UI || 'https://app.netlify.com'
     const token = authToken || this.configToken
     if (!token) {
       return this.expensivelyAuthenticate()
