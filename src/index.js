@@ -81,7 +81,7 @@ class BaseCommand extends Command {
     const webUI = process.env.NETLIFY_WEB_UI || 'https://app.netlify.com'
     const token = authToken || this.configToken
     if (!token) {
-      return expensivelyAuthenticate()
+      return this.expensivelyAuthenticate()
     } else {
       return token
     }
@@ -95,6 +95,7 @@ class BaseCommand extends Command {
     return token
   }
   async expensivelyAuthenticate() {
+    const webUI = process.env.NETLIFY_WEB_UI || 'https://app.netlify.com'
     this.log(`Logging into your Netlify account...`)
 
     // Create ticket for auth
