@@ -78,7 +78,7 @@ class BaseCommand extends Command {
   }
 
   async authenticate(authToken) {
-    const token = authToken || this.configToken
+    const token = authToken || process.env.NETLIFY_AUTH_TOKEN || this.configToken
     if (!token) {
       return this.expensivelyAuthenticate()
     } else {
