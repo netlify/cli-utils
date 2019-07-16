@@ -23,7 +23,6 @@ class BaseCommand extends Command {
     const projectRoot = findRoot(process.cwd())
     // Grab netlify API token
     const token = getConfigToken()
-
     // Get site config from netlify.toml
     const configPath = getConfigPath(projectRoot)
     // TODO: https://github.com/request/caseless to handle key casing issues
@@ -72,8 +71,8 @@ class BaseCommand extends Command {
     }
   }
 
-  async authenticate(authToken) {
-    const token = getConfigToken(authToken)
+  async authenticate(authTokenFromFlag) {
+    const token = getConfigToken(authTokenFromFlag)
     if (!token) {
       return this.expensivelyAuthenticate()
     } else {
@@ -147,6 +146,11 @@ class BaseCommand extends Command {
   }
 }
 
+/**
+ * Get user netlify API token
+ * @param  {string} authTokenFromFlag - value passed in by CLI flag
+ * @return {string} - resolved Netlify API token
+ */
 function getConfigToken(authTokenFromFlag) {
   // 1. First honor command flag --auth
   if (authTokenFromFlag) {
