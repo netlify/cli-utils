@@ -22,8 +22,7 @@ class BaseCommand extends Command {
   async init(err) {
     const projectRoot = findRoot(process.cwd())
     // Grab netlify API token
-    const token = this.configToken
-
+    const token = getConfigToken()
     // Get site config from netlify.toml
     const configPath = getConfigPath(projectRoot)
     // TODO: https://github.com/request/caseless to handle key casing issues
@@ -63,11 +62,6 @@ class BaseCommand extends Command {
     this.netlify.api.accessToken = token
   }
 
-  get configToken() {
-    const userId = globalConfig.get('userId')
-    return globalConfig.get(`users.${userId}.auth.token`)
-  }
-
   async isLoggedIn() {
     try {
       await this.netlify.api.getCurrentUser()
@@ -77,8 +71,8 @@ class BaseCommand extends Command {
     }
   }
 
-  async authenticate(authToken) {
-    const token = authToken || process.env.NETLIFY_AUTH_TOKEN || this.configToken
+  async authenticate(authTokenFromFlag) {
+    const token = getConfigToken(authTokenFromFlag)
     if (!token) {
       return this.expensivelyAuthenticate()
     } else {
@@ -150,6 +144,25 @@ class BaseCommand extends Command {
     this.log()
     return accessToken
   }
+}
+
+/**
+ * Get user netlify API token
+ * @param  {string} authTokenFromFlag - value passed in by CLI flag
+ * @return {string} - resolved Netlify API token
+ */
+function getConfigToken(authTokenFromFlag) {
+  // 1. First honor command flag --auth
+  if (authTokenFromFlag) {
+    return authTokenFromFlag
+  }
+  // 2. then Check ENV var
+  if (process.env.NETLIFY_AUTH_TOKEN) {
+    return process.env.NETLIFY_AUTH_TOKEN
+  }
+  // 3. If no env var use global user setting
+  const userId = globalConfig.get('userId')
+  return globalConfig.get(`users.${userId}.auth.token`)
 }
 
 module.exports = BaseCommand
