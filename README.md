@@ -65,3 +65,8 @@ Get the configuration from `netlify.[toml/yml]`.
 #### `this.authenticate()`
 
 A method that will log the user in if they are not already logged in.  If the user is already logged in, this is a noop.
+
+
+## Dependancy graph
+
+<img src='./dependency-graph.svg' />
