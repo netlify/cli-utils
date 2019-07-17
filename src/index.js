@@ -66,8 +66,8 @@ class BaseCommand extends Command {
 
   /**
    * Get user netlify API token
-   * @param  {string} tokenFromFlag - value passed in by CLI flag
-   * @return {array} - [ tokenValue, location ] resolved Netlify API token
+   * @param  {string} - [tokenFromFlag] - value passed in by CLI flag
+   * @return {[string, string]} - tokenValue & location of resolved Netlify API token
    */
   getConfigToken(tokenFromFlag) {
     // 1. First honor command flag --auth
