@@ -9,6 +9,7 @@ const openBrowser = require('./utils/open-browser')
 const findRoot = require('./utils/find-root')
 const { track, identify } = require('./utils/telemetry')
 const merge = require('lodash.merge')
+const argv = require('minimist')(process.argv.slice(2))
 const { NETLIFY_AUTH_TOKEN } = process.env
 
 // Netlify CLI client id. Lives in bot@netlify.com
@@ -23,7 +24,7 @@ class BaseCommand extends Command {
   async init(err) {
     const projectRoot = findRoot(process.cwd())
     // Grab netlify API token
-    const [ token ] = this.getConfigToken()
+    const [ token ] = this.getConfigToken(argv.auth)
     // Get site config from netlify.toml
     const configPath = getConfigPath(projectRoot)
     // TODO: https://github.com/request/caseless to handle key casing issues
