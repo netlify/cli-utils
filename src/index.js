@@ -9,6 +9,7 @@ const openBrowser = require('./utils/open-browser')
 const findRoot = require('./utils/find-root')
 const { track, identify } = require('./utils/telemetry')
 const merge = require('lodash.merge')
+const { NETLIFY_AUTH_TOKEN } = process.env
 
 // Netlify CLI client id. Lives in bot@netlify.com
 // Todo setup client for multiple environments
@@ -22,7 +23,7 @@ class BaseCommand extends Command {
   async init(err) {
     const projectRoot = findRoot(process.cwd())
     // Grab netlify API token
-    const token = getConfigToken()
+    const [ token ] = this.getConfigToken()
     // Get site config from netlify.toml
     const configPath = getConfigPath(projectRoot)
     // TODO: https://github.com/request/caseless to handle key casing issues
@@ -54,14 +55,6 @@ class BaseCommand extends Command {
     }
   }
 
-  get clientToken() {
-    return this.netlify.api.accessToken
-  }
-
-  set clientToken(token) {
-    this.netlify.api.accessToken = token
-  }
-
   async isLoggedIn() {
     try {
       await this.netlify.api.getCurrentUser()
@@ -71,22 +64,38 @@ class BaseCommand extends Command {
     }
   }
 
-  async authenticate(authTokenFromFlag) {
-    const token = getConfigToken(authTokenFromFlag)
+  /**
+   * Get user netlify API token
+   * @param  {string} - [tokenFromFlag] - value passed in by CLI flag
+   * @return {[string, string]} - tokenValue & location of resolved Netlify API token
+   */
+  getConfigToken(tokenFromFlag) {
+    // 1. First honor command flag --auth
+    if (tokenFromFlag) {
+      return [ tokenFromFlag, 'flag' ]
+    }
+    // 2. then Check ENV var
+    if (NETLIFY_AUTH_TOKEN && NETLIFY_AUTH_TOKEN !== 'null') {
+      return [ NETLIFY_AUTH_TOKEN, 'env' ]
+    }
+    // 3. If no env var use global user setting
+    const userId = globalConfig.get('userId')
+    const tokenFromConfig = globalConfig.get(`users.${userId}.auth.token`)
+    if (tokenFromConfig) {
+      return [ tokenFromConfig, 'config' ]
+    }
+    return [ null, 'not found']
+  }
+
+  async authenticate(tokenFromFlag) {
+    const [ token ] = this.getConfigToken(tokenFromFlag)
     if (!token) {
       return this.expensivelyAuthenticate()
     } else {
       return token
     }
   }
-  async expensivelyCheckToken(token) {
-    // this used to be inside authenticate() but was slowing down everything
-    // https://github.com/netlify/cli/issues/286
-    // we split it out so you have to be mindful of where you incur cost
-    this.clientToken = token
-    await this.netlify.api.getCurrentUser()
-    return token
-  }
+
   async expensivelyAuthenticate() {
     const webUI = process.env.NETLIFY_WEB_UI || 'https://app.netlify.com'
     this.log(`Logging into your Netlify account...`)
@@ -98,12 +107,15 @@ class BaseCommand extends Command {
 
     // Open browser for authentication
     const authLink = `${webUI}/authorize?response_type=ticket&ticket=${ticket.id}`
+
     this.log(`Opening ${authLink}`)
     await openBrowser(authLink)
 
     const accessToken = await this.netlify.api.getAccessToken(ticket)
 
-    if (!accessToken) this.error('Could not retrieve access token')
+    if (!accessToken) {
+      this.error('Could not retrieve access token')
+    }
 
     const user = await this.netlify.api.getCurrentUser()
     const userID = user.id
@@ -134,6 +146,7 @@ class BaseCommand extends Command {
         email: email
       })
     })
+
     // Log success
     this.log()
     this.log(`${chalk.greenBright('You are now logged into your Netlify account!')}`)
@@ -144,25 +157,6 @@ class BaseCommand extends Command {
     this.log()
     return accessToken
   }
-}
-
-/**
- * Get user netlify API token
- * @param  {string} authTokenFromFlag - value passed in by CLI flag
- * @return {string} - resolved Netlify API token
- */
-function getConfigToken(authTokenFromFlag) {
-  // 1. First honor command flag --auth
-  if (authTokenFromFlag) {
-    return authTokenFromFlag
-  }
-  // 2. then Check ENV var
-  if (process.env.NETLIFY_AUTH_TOKEN) {
-    return process.env.NETLIFY_AUTH_TOKEN
-  }
-  // 3. If no env var use global user setting
-  const userId = globalConfig.get('userId')
-  return globalConfig.get(`users.${userId}.auth.token`)
 }
 
 module.exports = BaseCommand
