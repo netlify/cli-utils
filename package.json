@@ -1,7 +1,7 @@
 {
   "name": "@netlify/cli-utils",
   "description": "Netlify CLI utilities for configuration and API access",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "author": "Netlify Inc.",
   "ava": {
     "files": [
