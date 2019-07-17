@@ -107,12 +107,15 @@ class BaseCommand extends Command {
 
     // Open browser for authentication
     const authLink = `${webUI}/authorize?response_type=ticket&ticket=${ticket.id}`
+
     this.log(`Opening ${authLink}`)
     await openBrowser(authLink)
 
     const accessToken = await this.netlify.api.getAccessToken(ticket)
 
-    if (!accessToken) this.error('Could not retrieve access token')
+    if (!accessToken) {
+      this.error('Could not retrieve access token')
+    }
 
     const user = await this.netlify.api.getCurrentUser()
     const userID = user.id
@@ -143,6 +146,7 @@ class BaseCommand extends Command {
         email: email
       })
     })
+
     // Log success
     this.log()
     this.log(`${chalk.greenBright('You are now logged into your Netlify account!')}`)
