@@ -1,6 +1,7 @@
 const { Command } = require('@oclif/command')
 const chalk = require('chalk')
 const API = require('netlify')
+const { format, inspect } = require('util')
 const getConfigPath = require('./utils/get-config-path')
 const readConfig = require('./utils/read-config')
 const globalConfig = require('./global-config')
@@ -63,6 +64,14 @@ class BaseCommand extends Command {
     } catch (_) {
       return false
     }
+  }
+
+  log(message = '', ...args) {
+    if (this.argv && this.argv.includes('--silent')) {
+      return
+    }
+    message = typeof message === 'string' ? message : inspect(message)
+    process.stdout.write(format(message, ...args) + '\n')
   }
 
   parse(opts, argv = this.argv) {
