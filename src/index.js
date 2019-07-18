@@ -65,6 +65,43 @@ class BaseCommand extends Command {
     }
   }
 
+  parse(opts, argv = this.argv) {
+    /* enrich parse with global flags */
+    const globalFlags = {}
+    if (opts.flags && !opts.flags.silent) {
+      globalFlags['silent'] = {
+        parse: (b, _) => b,
+        description: 'Silence CLI output',
+        allowNo: false,
+        type: 'boolean'
+      }
+    }
+    if (opts.flags && !opts.flags.json) {
+      globalFlags['json'] = {
+        parse: (b, _) => b,
+        description: 'Output return values as JSON',
+        allowNo: false,
+        type: 'boolean'
+      }
+    }
+    if (opts.flags && !opts.flags.auth) {
+      globalFlags['auth'] = {
+        parse: (b, _) => b,
+        description: 'Netlify auth token',
+        input: [],
+        multiple: false,
+        type: 'option'
+      }
+    }
+
+    // enrich with flags here
+    opts.flags = Object.assign({}, opts.flags, globalFlags)
+
+    return require('@oclif/parser').parse(argv, Object.assign({}, {
+      context: this,
+    }, opts))
+  }
+
   /**
    * Get user netlify API token
    * @param  {string} - [tokenFromFlag] - value passed in by CLI flag
