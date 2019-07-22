@@ -25,7 +25,8 @@ class BaseCommand extends Command {
   async init(err) {
     const projectRoot = findRoot(process.cwd())
     // Grab netlify API token
-    const authViaFlag = argv.auth || argv.a
+    const authViaFlag = getAuthArg(argv)
+
     const [ token ] = this.getConfigToken(authViaFlag)
     // Get site config from netlify.toml
     const configPath = getConfigPath(projectRoot)
@@ -68,6 +69,7 @@ class BaseCommand extends Command {
   }
 
   logJson(message = '', ...args) {
+    /* Only run json logger when --json flag present */
     if (!argv.json) {
       return
     }
@@ -75,15 +77,17 @@ class BaseCommand extends Command {
   }
 
   log(message = '', ...args) {
-    if (this.argv && this.argv.includes('--silent') || argv.silent || argv.json) {
+    /* If  --silent or --json flag passed disable logger */
+    if (argv.silent || argv.json) {
       return
     }
     message = typeof message === 'string' ? message : inspect(message)
     process.stdout.write(format(message, ...args) + '\n')
   }
 
+  /* Modified flag parser to support global --auth, --json, & --silent flags */
   parse(opts, argv = this.argv) {
-    // Set flags object for commands without flags
+    /* Set flags object for commands without flags */
     if (!opts.flags) {
       opts.flags = {}
     }
@@ -216,6 +220,14 @@ class BaseCommand extends Command {
     this.log()
     return accessToken
   }
+}
+
+function getAuthArg(cliArgs) {
+  // If deploy command. Support shorthand 'a' flag
+  if (cliArgs && cliArgs._ && cliArgs._[0] === 'deploy') {
+    return cliArgs.auth || cliArgs.a
+  }
+  return cliArgs.auth
 }
 
 module.exports = BaseCommand
