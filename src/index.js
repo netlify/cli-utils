@@ -25,7 +25,8 @@ class BaseCommand extends Command {
   async init(err) {
     const projectRoot = findRoot(process.cwd())
     // Grab netlify API token
-    const [ token ] = this.getConfigToken(argv.auth)
+    const authViaFlag = argv.auth || argv.a
+    const [ token ] = this.getConfigToken(authViaFlag)
     // Get site config from netlify.toml
     const configPath = getConfigPath(projectRoot)
     // TODO: https://github.com/request/caseless to handle key casing issues
@@ -66,8 +67,15 @@ class BaseCommand extends Command {
     }
   }
 
+  logJson(message = '', ...args) {
+    if (!argv.json) {
+      return
+    }
+    process.stdout.write(JSON.stringify(message, null, 2))
+  }
+
   log(message = '', ...args) {
-    if (this.argv && this.argv.includes('--silent')) {
+    if (this.argv && this.argv.includes('--silent') || argv.silent || argv.json) {
       return
     }
     message = typeof message === 'string' ? message : inspect(message)
@@ -75,9 +83,13 @@ class BaseCommand extends Command {
   }
 
   parse(opts, argv = this.argv) {
+    // Set flags object for commands without flags
+    if (!opts.flags) {
+      opts.flags = {}
+    }
     /* enrich parse with global flags */
     const globalFlags = {}
-    if (opts.flags && !opts.flags.silent) {
+    if (!opts.flags.silent) {
       globalFlags['silent'] = {
         parse: (b, _) => b,
         description: 'Silence CLI output',
@@ -85,7 +97,7 @@ class BaseCommand extends Command {
         type: 'boolean'
       }
     }
-    if (opts.flags && !opts.flags.json) {
+    if (!opts.flags.json) {
       globalFlags['json'] = {
         parse: (b, _) => b,
         description: 'Output return values as JSON',
@@ -93,7 +105,7 @@ class BaseCommand extends Command {
         type: 'boolean'
       }
     }
-    if (opts.flags && !opts.flags.auth) {
+    if (!opts.flags.auth) {
       globalFlags['auth'] = {
         parse: (b, _) => b,
         description: 'Netlify auth token',
