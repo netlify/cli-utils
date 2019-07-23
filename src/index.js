@@ -1,15 +1,16 @@
 const { Command } = require('@oclif/command')
-const chalk = require('chalk')
 const API = require('netlify')
+const merge = require('lodash.merge')
 const { format, inspect } = require('util')
 const getConfigPath = require('./utils/get-config-path')
 const readConfig = require('./utils/read-config')
 const globalConfig = require('./global-config')
 const StateConfig = require('./state')
+const chalkInstance = require('./utils/chalk')
 const openBrowser = require('./utils/open-browser')
 const findRoot = require('./utils/find-root')
 const { track, identify } = require('./utils/telemetry')
-const merge = require('lodash.merge')
+
 const argv = require('minimist')(process.argv.slice(2))
 const { NETLIFY_AUTH_TOKEN } = process.env
 
@@ -127,6 +128,10 @@ class BaseCommand extends Command {
     }, opts))
   }
 
+  get chalk() {
+    // If --json flag disable chalk colors
+    return chalkInstance(argv.json)
+  }
   /**
    * Get user netlify API token
    * @param  {string} - [tokenFromFlag] - value passed in by CLI flag
@@ -212,11 +217,11 @@ class BaseCommand extends Command {
 
     // Log success
     this.log()
-    this.log(`${chalk.greenBright('You are now logged into your Netlify account!')}`)
+    this.log(`${this.chalk.greenBright('You are now logged into your Netlify account!')}`)
     this.log()
-    this.log(`Run ${chalk.cyanBright('netlify status')} for account details`)
+    this.log(`Run ${this.chalk.cyanBright('netlify status')} for account details`)
     this.log()
-    this.log(`To see all available commands run: ${chalk.cyanBright('netlify help')}`)
+    this.log(`To see all available commands run: ${this.chalk.cyanBright('netlify help')}`)
     this.log()
     return accessToken
   }
