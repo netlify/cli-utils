@@ -23,8 +23,8 @@ class BaseCommand extends Command {
     super(...args)
   }
   // Initialize context
-  async init(err) {
-    const projectRoot = findRoot(process.cwd())
+  async init(_projectRoot) {
+    const projectRoot = findRoot(_projectRoot || process.cwd()) // if calling programmatically, can use a supplied root, else in normal CLI context it just uses process.cwd()
     // Grab netlify API token
     const authViaFlag = getAuthArg(argv)
 
