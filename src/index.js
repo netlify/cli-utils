@@ -1,14 +1,18 @@
 const { Command } = require('@oclif/command')
-const chalk = require('chalk')
 const API = require('netlify')
+const merge = require('lodash.merge')
+const { format, inspect } = require('util')
 const getConfigPath = require('./utils/get-config-path')
 const readConfig = require('./utils/read-config')
 const globalConfig = require('./global-config')
 const StateConfig = require('./state-config')
+const chalkInstance = require('./utils/chalk')
 const openBrowser = require('./utils/open-browser')
 const findRoot = require('./utils/find-root')
 const { track, identify } = require('./utils/telemetry')
-const merge = require('lodash.merge')
+
+const argv = require('minimist')(process.argv.slice(2))
+const { NETLIFY_AUTH_TOKEN } = process.env
 
 // Netlify CLI client id. Lives in bot@netlify.com
 // Todo setup client for multiple environments
@@ -22,8 +26,9 @@ class BaseCommand extends Command {
   async init(err) {
     const projectRoot = findRoot(process.cwd())
     // Grab netlify API token
-    const token = this.configToken
+    const authViaFlag = getAuthArg(argv)
 
+    const [token] = this.getConfigToken(authViaFlag)
     // Get site config from netlify.toml
     const configPath = getConfigPath(projectRoot)
     // TODO: https://github.com/request/caseless to handle key casing issues
@@ -55,19 +60,6 @@ class BaseCommand extends Command {
     }
   }
 
-  get clientToken() {
-    return this.netlify.api.accessToken
-  }
-
-  set clientToken(token) {
-    this.netlify.api.accessToken = token
-  }
-
-  get configToken() {
-    const userId = globalConfig.get('userId')
-    return globalConfig.get(`users.${userId}.auth.token`)
-  }
-
   async isLoggedIn() {
     try {
       await this.netlify.api.getCurrentUser()
@@ -77,24 +69,110 @@ class BaseCommand extends Command {
     }
   }
 
-  async authenticate(authToken) {
-    const webUI = process.env.NETLIFY_WEB_UI || 'https://app.netlify.com'
-    const token = authToken || this.configToken
+  logJson(message = '', ...args) {
+    /* Only run json logger when --json flag present */
+    if (!argv.json) {
+      return
+    }
+    process.stdout.write(JSON.stringify(message, null, 2))
+  }
+
+  log(message = '', ...args) {
+    /* If  --silent or --json flag passed disable logger */
+    if (argv.silent || argv.json) {
+      return
+    }
+    message = typeof message === 'string' ? message : inspect(message)
+    process.stdout.write(format(message, ...args) + '\n')
+  }
+
+  /* Modified flag parser to support global --auth, --json, & --silent flags */
+  parse(opts, argv = this.argv) {
+    /* Set flags object for commands without flags */
+    if (!opts.flags) {
+      opts.flags = {}
+    }
+    /* enrich parse with global flags */
+    const globalFlags = {}
+    if (!opts.flags.silent) {
+      globalFlags['silent'] = {
+        parse: (b, _) => b,
+        description: 'Silence CLI output',
+        allowNo: false,
+        type: 'boolean'
+      }
+    }
+    if (!opts.flags.json) {
+      globalFlags['json'] = {
+        parse: (b, _) => b,
+        description: 'Output return values as JSON',
+        allowNo: false,
+        type: 'boolean'
+      }
+    }
+    if (!opts.flags.auth) {
+      globalFlags['auth'] = {
+        parse: (b, _) => b,
+        description: 'Netlify auth token',
+        input: [],
+        multiple: false,
+        type: 'option'
+      }
+    }
+
+    // enrich with flags here
+    opts.flags = Object.assign({}, opts.flags, globalFlags)
+
+    return require('@oclif/parser').parse(
+      argv,
+      Object.assign(
+        {},
+        {
+          context: this
+        },
+        opts
+      )
+    )
+  }
+
+  get chalk() {
+    // If --json flag disable chalk colors
+    return chalkInstance(argv.json)
+  }
+  /**
+   * Get user netlify API token
+   * @param  {string} - [tokenFromFlag] - value passed in by CLI flag
+   * @return {[string, string]} - tokenValue & location of resolved Netlify API token
+   */
+  getConfigToken(tokenFromFlag) {
+    // 1. First honor command flag --auth
+    if (tokenFromFlag) {
+      return [tokenFromFlag, 'flag']
+    }
+    // 2. then Check ENV var
+    if (NETLIFY_AUTH_TOKEN && NETLIFY_AUTH_TOKEN !== 'null') {
+      return [NETLIFY_AUTH_TOKEN, 'env']
+    }
+    // 3. If no env var use global user setting
+    const userId = globalConfig.get('userId')
+    const tokenFromConfig = globalConfig.get(`users.${userId}.auth.token`)
+    if (tokenFromConfig) {
+      return [tokenFromConfig, 'config']
+    }
+    return [null, 'not found']
+  }
+
+  async authenticate(tokenFromFlag) {
+    const [token] = this.getConfigToken(tokenFromFlag)
     if (!token) {
-      return expensivelyAuthenticate()
+      return this.expensivelyAuthenticate()
     } else {
       return token
     }
   }
-  async expensivelyCheckToken(token) {
-    // this used to be inside authenticate() but was slowing down everything
-    // https://github.com/netlify/cli/issues/286
-    // we split it out so you have to be mindful of where you incur cost
-    this.clientToken = token
-    await this.netlify.api.getCurrentUser()
-    return token
-  }
+
   async expensivelyAuthenticate() {
+    const webUI = process.env.NETLIFY_WEB_UI || 'https://app.netlify.com'
     this.log(`Logging into your Netlify account...`)
 
     // Create ticket for auth
@@ -104,12 +182,15 @@ class BaseCommand extends Command {
 
     // Open browser for authentication
     const authLink = `${webUI}/authorize?response_type=ticket&ticket=${ticket.id}`
+
     this.log(`Opening ${authLink}`)
     await openBrowser(authLink)
 
     const accessToken = await this.netlify.api.getAccessToken(ticket)
 
-    if (!accessToken) this.error('Could not retrieve access token')
+    if (!accessToken) {
+      this.error('Could not retrieve access token')
+    }
 
     const user = await this.netlify.api.getCurrentUser()
     const userID = user.id
@@ -140,16 +221,25 @@ class BaseCommand extends Command {
         email: email
       })
     })
+
     // Log success
     this.log()
-    this.log(`${chalk.greenBright('You are now logged into your Netlify account!')}`)
+    this.log(`${this.chalk.greenBright('You are now logged into your Netlify account!')}`)
     this.log()
-    this.log(`Run ${chalk.cyanBright('netlify status')} for account details`)
+    this.log(`Run ${this.chalk.cyanBright('netlify status')} for account details`)
     this.log()
-    this.log(`To see all available commands run: ${chalk.cyanBright('netlify help')}`)
+    this.log(`To see all available commands run: ${this.chalk.cyanBright('netlify help')}`)
     this.log()
     return accessToken
   }
+}
+
+function getAuthArg(cliArgs) {
+  // If deploy command. Support shorthand 'a' flag
+  if (cliArgs && cliArgs._ && cliArgs._[0] === 'deploy') {
+    return cliArgs.auth || cliArgs.a
+  }
+  return cliArgs.auth
 }
 
 module.exports = BaseCommand
