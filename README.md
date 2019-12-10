@@ -1,4 +1,8 @@
-# @netlify/cli-utils
+# (Deprecated) @netlify/cli-utils
+
+> Note: This package has been deprecated and moved into the core CLI. https://github.com/netlify/cli
+
+---
 
 [netlify-cli](https://github.com/netlify/cli)'s [@oclif/command](@oclif/command) baseclass.
 
